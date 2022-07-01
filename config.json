@@ -1,0 +1,21 @@
+{
+    "waitCheck": 10,
+    "waitExit": 10,
+    "applications": [
+        {
+            "path": "C:\\Windows\\notepad.exe",
+            "useExistingInstance": true,
+            "killOnExit": true
+        },
+        {
+            "path": "C:\\Windows\\System32\\calc.exe",
+            "useExistingInstance": false,
+            "killOnExit": true
+        },
+        {
+            "path": "C:\\Windows\\write.exe",
+            "useExistingInstance": false,
+            "killOnExit": false
+        }
+    ]
+}
