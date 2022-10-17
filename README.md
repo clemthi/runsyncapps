@@ -1,6 +1,6 @@
 # RunSyncedApp
 
-This small application allows to run multiple application at once and if anyone of them is closed, the other one are killed.
+This small application allows to start multiple applications at once and if one of them is closed, the others are killed.
 
 ## Usage
 
@@ -13,7 +13,7 @@ runsyncedapp.exe --config=myconfig.json
 
 ## JSON configuration
 
-The configuration file is in JSON, 
+The JSON configuration file looks like:
 
 ```json
 {
