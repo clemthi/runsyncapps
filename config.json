@@ -1,19 +1,19 @@
 {
-    "waitCheck": 10,
-    "waitExit": 10,
+    "waitCheck": 1,
+    "waitExit": 1,
     "applications": [
         {
-            "path": "C:\\Windows\\notepad.exe",
-            "useExistingInstance": true,
-            "killOnExit": true
-        },
-        {
-            "path": "C:\\Windows\\System32\\calc.exe",
+            "path": "C:\\Windows\\System32\\dxdiag.exe",
             "useExistingInstance": false,
             "killOnExit": true
         },
         {
-            "path": "C:\\Windows\\write.exe",
+            "path": "C:\\Windows\\System32\\ftp.exe",
+            "useExistingInstance": false,
+            "killOnExit": true
+        },
+        {
+            "path": "C:\\Windows\\System32\\msinfo32.exe",
             "useExistingInstance": false,
             "killOnExit": false
         }

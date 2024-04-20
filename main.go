@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"log"
+	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"time"
@@ -29,20 +30,20 @@ type ProcessDetails struct {
 	killOnExit bool
 }
 
-var verbose bool = false
-
 func main() {
+	slog.SetLogLoggerLevel(slog.LevelInfo)
+
+	slog.Debug("Loading flags")
 	configFile := flag.String("config", "config.json", "path to a configuration file")
-	verbose = *flag.Bool("verbose", true, "enable verbosity")
 
 	config, err := loadConfigFile(*configFile)
 	if err != nil {
-		log.Fatalf("Cannot load config file %s : %s", *configFile, err)
+		exitWithMsg(fmt.Sprintf("Cannot load config file %s : %s", *configFile, err))
 	}
 
 	runningProcs, err := startProcesses(config.Applications)
 	if err != nil {
-		log.Fatalf("Error launching apps : %s", err)
+		exitWithMsg(fmt.Sprintf("Error launching apps : %s", err))
 	}
 
 	time.Sleep(time.Duration(config.WaitCheck) * time.Second)
@@ -50,19 +51,20 @@ func main() {
 
 	time.Sleep(time.Duration(config.WaitExit) * time.Second)
 	killProcesses(runningProcs)
-	log.Printf("Done")
+	slog.Debug("Exiting")
 }
 
-func loadConfigFile(configFile string) (ConfigFile, error) {
+func loadConfigFile(configFile string) (*ConfigFile, error) {
+	slog.Debug(fmt.Sprintf("Loading config file %s", configFile))
 	file, err := os.ReadFile(configFile)
 	if err != nil {
-		log.Fatalf("Error opening config %s : %s", configFile, err)
+		return nil, err
 	}
 
 	var jsonData ConfigFile
 	err = json.Unmarshal([]byte(file), &jsonData)
 
-	return jsonData, err
+	return &jsonData, err
 }
 
 func startProcesses(apps []AppConfig) (map[int]ProcessDetails, error) {
@@ -70,7 +72,7 @@ func startProcesses(apps []AppConfig) (map[int]ProcessDetails, error) {
 
 	runningProcs, err := ps.Processes()
 	if err != nil {
-		log.Fatalf("Error listing processed (%s)", err)
+		exitWithMsg(fmt.Sprintf("Error listing processed (%s)", err))
 	}
 
 	for _, app := range apps {
@@ -80,11 +82,11 @@ func startProcesses(apps []AppConfig) (map[int]ProcessDetails, error) {
 			// check existing processes
 			currentPid, err := findPidFromPath(app.Path, runningProcs)
 			if err != nil {
-				log.Fatalf("Error checking running processes : %s", err)
+				slog.Warn(fmt.Sprintf("Error checking running processes : %s", err))
 			}
 			if currentPid != -1 {
 				newProc.pid = currentPid
-				log.Printf("Found running app %s [PID : %d]\n", newProc.path, newProc.pid)
+				slog.Info("Found running app %s [PID : %d]\n", newProc.path, newProc.pid)
 			}
 		}
 
@@ -96,9 +98,7 @@ func startProcesses(apps []AppConfig) (map[int]ProcessDetails, error) {
 				return nil, err
 			}
 			newProc.pid = cmd.Process.Pid
-			if verbose {
-				log.Printf("Starting apps %s [PID : %d]\n", newProc.path, newProc.pid)
-			}
+			slog.Info(fmt.Sprintf("Starting apps %s [PID : %d]", newProc.path, newProc.pid))
 		}
 		procs[newProc.pid] = newProc
 	}
@@ -106,9 +106,15 @@ func startProcesses(apps []AppConfig) (map[int]ProcessDetails, error) {
 	return procs, nil
 }
 
+func exitWithMsg(msg string) {
+	slog.Error(msg)
+	os.Exit(1)
+}
+
 func findPidFromPath(path string, procs []ps.Process) (int, error) {
 	for _, proc := range procs {
 		if procPath, _ := proc.Path(); procPath == path {
+			slog.Debug(fmt.Sprintf("Found running app %s with PID %d", path, proc.Pid()))
 			return proc.Pid(), nil
 		}
 	}
@@ -129,9 +135,7 @@ func checkRunningProcesses(procs map[int]ProcessDetails) {
 		go checkRunningProcess(pid, chanProcesses)
 	}
 	closedProcess := <-chanProcesses
-	if verbose {
-		log.Printf("Process closed %s [PID: %d]", procs[closedProcess].path, closedProcess)
-	}
+	slog.Info(fmt.Sprintf("Process closed %s [PID: %d]", procs[closedProcess].path, closedProcess))
 }
 
 func checkRunningProcess(pid int, processes chan int) {
@@ -139,38 +143,41 @@ func checkRunningProcess(pid int, processes chan int) {
 	if err != nil {
 		processes <- pid
 	}
-	if verbose {
-		log.Printf("Found running process [PID: %d]", process.Pid)
-	}
 
-	if verbose {
-		log.Printf("Waiting process [PID: %d]", process.Pid)
-	}
+	// Wait the process to exit
+	slog.Debug(fmt.Sprintf("Waiting process [PID: %d] to exit", pid))
 	processState, err := process.Wait()
 	if err != nil {
-		if verbose {
-			log.Printf("Error while waiting process [PID: %d]", process.Pid)
-		}
+		slog.Warn(fmt.Sprintf("Error while waiting process [PID: %d]", pid))
 		processes <- pid
+		return
 	}
-	if verbose {
-		log.Printf("Process [PID: %d] state = %s ", process.Pid, processState.String())
-	}
+
 	if processState.Exited() {
+		slog.Info(fmt.Sprintf("Process [PID: %d] exited with code %d", pid, processState.ExitCode()))
 		processes <- pid
+		return
 	}
+
+	// something went wrong (?), let's assume process is over
+	slog.Warn(fmt.Sprintf("Process [PID: %d] exited but : %s ", pid, processState))
+	processes <- pid
 }
 
 func killProcesses(procs map[int]ProcessDetails) {
+	slog.Info("Killing other apps")
 	for _, proc := range procs {
 		if proc.killOnExit {
+			slog.Debug(fmt.Sprintf("Killing process %s [PID: %d]", proc.path, proc.pid))
 			procKilled, err := killProcess(proc.pid)
 			if err != nil {
-				log.Printf("Error when killing process%s [PID: %d] : %s", proc.path, proc.pid, err)
+				slog.Warn(fmt.Sprintf("Error when killing process %s [PID: %d] : %s", proc.path, proc.pid, err))
 			}
-			if procKilled && verbose {
-				log.Printf("Killed process %s [PID: %d]", proc.path, proc.pid)
+			if procKilled {
+				slog.Info(fmt.Sprintf("Killed process %s [PID: %d]", proc.path, proc.pid))
 			}
+		} else {
+			slog.Debug(fmt.Sprintf("Skipping process %s [PID: %d]", proc.path, proc.pid))
 		}
 	}
 }
@@ -183,7 +190,7 @@ func killProcess(pid int) (bool, error) {
 	process, _ := os.FindProcess(pid)
 	err := process.Kill()
 	if err != nil {
-		log.Printf("Cannot kill process %d", pid)
+		slog.Warn(fmt.Sprintf("Cannot kill process %d", pid))
 		return false, err
 	}
 	return true, nil
