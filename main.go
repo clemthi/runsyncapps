@@ -91,7 +91,7 @@ func startProcesses(apps []AppConfig) (map[int]ProcessDetails, error) {
 			}
 			if currentPid != -1 {
 				newProc.pid = currentPid
-				slog.Info("Found running app %s [PID : %d]\n", newProc.path, newProc.pid)
+				slog.Info(fmt.Sprintf("Found running app %s [PID : %d]\n", newProc.path, newProc.pid))
 			}
 		}
 
