@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -30,16 +29,18 @@ type ProcessDetails struct {
 	killOnExit bool
 }
 
+var verbose bool = false
+
 func main() {
 	configFile := flag.String("config", "config.json", "path to a configuration file")
-	flag.Parse()
+	verbose = *flag.Bool("verbose", true, "enable verbosity")
 
 	config, err := loadConfigFile(*configFile)
 	if err != nil {
 		log.Fatalf("Cannot load config file %s : %s", *configFile, err)
 	}
 
-	runningProcs, err := startProcesses(config.Applications, true)
+	runningProcs, err := startProcesses(config.Applications)
 	if err != nil {
 		log.Fatalf("Error launching apps : %s", err)
 	}
@@ -53,7 +54,7 @@ func main() {
 }
 
 func loadConfigFile(configFile string) (ConfigFile, error) {
-	file, err := ioutil.ReadFile(configFile)
+	file, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Fatalf("Error opening config %s : %s", configFile, err)
 	}
@@ -64,7 +65,7 @@ func loadConfigFile(configFile string) (ConfigFile, error) {
 	return jsonData, err
 }
 
-func startProcesses(apps []AppConfig, checkCurrentProcesses bool) (map[int]ProcessDetails, error) {
+func startProcesses(apps []AppConfig) (map[int]ProcessDetails, error) {
 	procs := make(map[int]ProcessDetails)
 
 	runningProcs, err := ps.Processes()
@@ -76,6 +77,7 @@ func startProcesses(apps []AppConfig, checkCurrentProcesses bool) (map[int]Proce
 		newProc := ProcessDetails{path: app.Path, pid: -1, killOnExit: app.KillOnExit}
 
 		if app.UseExistingInstance {
+			// check existing processes
 			currentPid, err := findPidFromPath(app.Path, runningProcs)
 			if err != nil {
 				log.Fatalf("Error checking running processes : %s", err)
@@ -86,6 +88,7 @@ func startProcesses(apps []AppConfig, checkCurrentProcesses bool) (map[int]Proce
 			}
 		}
 
+		// start app if not found in existing processes
 		if newProc.pid == -1 {
 			cmd := exec.Command(app.Path)
 			err := cmd.Start()
@@ -93,7 +96,9 @@ func startProcesses(apps []AppConfig, checkCurrentProcesses bool) (map[int]Proce
 				return nil, err
 			}
 			newProc.pid = cmd.Process.Pid
-			log.Printf("Starting apps %s [PID : %d]\n", newProc.path, newProc.pid)
+			if verbose {
+				log.Printf("Starting apps %s [PID : %d]\n", newProc.path, newProc.pid)
+			}
 		}
 		procs[newProc.pid] = newProc
 	}
@@ -124,7 +129,9 @@ func checkRunningProcesses(procs map[int]ProcessDetails) {
 		go checkRunningProcess(pid, chanProcesses)
 	}
 	closedProcess := <-chanProcesses
-	log.Printf("Process closed %s [PID: %d]", procs[closedProcess].path, closedProcess)
+	if verbose {
+		log.Printf("Process closed %s [PID: %d]", procs[closedProcess].path, closedProcess)
+	}
 }
 
 func checkRunningProcess(pid int, processes chan int) {
@@ -132,9 +139,22 @@ func checkRunningProcess(pid int, processes chan int) {
 	if err != nil {
 		processes <- pid
 	}
+	if verbose {
+		log.Printf("Found running process [PID: %d]", process.Pid)
+	}
+
+	if verbose {
+		log.Printf("Waiting process [PID: %d]", process.Pid)
+	}
 	processState, err := process.Wait()
 	if err != nil {
+		if verbose {
+			log.Printf("Error while waiting process [PID: %d]", process.Pid)
+		}
 		processes <- pid
+	}
+	if verbose {
+		log.Printf("Process [PID: %d] state = %s ", process.Pid, processState.String())
 	}
 	if processState.Exited() {
 		processes <- pid
@@ -148,7 +168,7 @@ func killProcesses(procs map[int]ProcessDetails) {
 			if err != nil {
 				log.Printf("Error when killing process%s [PID: %d] : %s", proc.path, proc.pid, err)
 			}
-			if procKilled {
+			if procKilled && verbose {
 				log.Printf("Killed process %s [PID: %d]", proc.path, proc.pid)
 			}
 		}
