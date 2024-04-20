@@ -5,10 +5,11 @@ This small application allows to start multiple applications at once and if one 
 ## Usage
 
 ```shell
-runsyncedapp.exe --config=myconfig.json
+runsyncedapp.exe --config=myconfig.json --verbose
 ```
 
 - `config` : path of the config file
+- `verbose` : show all logs
 
 ## JSON configuration
 

@@ -34,11 +34,16 @@ func main() {
 	slog.SetLogLoggerLevel(slog.LevelInfo)
 
 	slog.Debug("Loading flags")
-	configFile := flag.String("config", "config.json", "path to a configuration file")
+	configFile := *flag.String("config", "config.json", "path to a configuration file")
+	verbose := *flag.Bool("verbose", false, "show all logs")
 
-	config, err := loadConfigFile(*configFile)
+	if verbose {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	}
+
+	config, err := loadConfigFile(configFile)
 	if err != nil {
-		exitWithMsg(fmt.Sprintf("Cannot load config file %s : %s", *configFile, err))
+		exitWithMsg(fmt.Sprintf("Cannot load config file %s : %s", configFile, err))
 	}
 
 	runningProcs, err := startProcesses(config.Applications)
