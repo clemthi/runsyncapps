@@ -5,11 +5,12 @@ This small application allows to start multiple applications at once and if one 
 ## Usage
 
 ```shell
-runsyncedapp.exe --config=myconfig.json --verbose
+runsyncedapp.exe --config=myconfig.json --log --logfile
 ```
 
 - `config` : path of the config file
-- `verbose` : show all logs
+- `log` : enable logging (in console by default)
+- `logfile` : log events in a `trace.log` file
 
 ## JSON configuration
 
@@ -21,17 +22,17 @@ The configuration file looks like this:
     "waitExit": 10,
     "applications": [
         {
-            "path": "C:\\Windows\\notepad.exe",
-            "useExistingInstance": true,
-            "killOnExit": true
-        },
-        {
-            "path": "C:\\Windows\\System32\\calc.exe",
+            "path": "C:\\Windows\\System32\\dxdiag.exe",
             "useExistingInstance": false,
             "killOnExit": true
         },
         {
-            "path": "C:\\Windows\\write.exe",
+            "path": "C:\\Windows\\System32\\charmap.exe",
+            "useExistingInstance": false,
+            "killOnExit": true
+        },
+        {
+            "path": "C:\\Windows\\System32\\msinfo32.exe",
             "useExistingInstance": false,
             "killOnExit": false
         }

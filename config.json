@@ -8,7 +8,7 @@
             "killOnExit": true
         },
         {
-            "path": "C:\\Windows\\System32\\ftp.exe",
+            "path": "C:\\Windows\\System32\\charmap.exe",
             "useExistingInstance": false,
             "killOnExit": true
         },
