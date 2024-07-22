@@ -1,16 +1,15 @@
 # RunSyncedApp
 
-This small application allows to start multiple applications at once and if one of them is closed, the others are killed.
+This small application allows to start multiple applications at once and if one of them is closed, the others are killed. A system tray icon allows the using to exit the application without killing the child processes.
 
 ## Usage
 
 ```shell
-runsyncedapp.exe --config=myconfig.json --log --logfile
+runsyncedapp.exe --config=myconfig.json --log
 ```
 
 - `config` : path of the config file
-- `log` : enable logging (in console by default)
-- `logfile` : log events in a `trace.log` file
+- `log` : log events in a `trace_<timestamp>.log` file
 
 ## JSON configuration
 
