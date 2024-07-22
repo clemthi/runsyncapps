@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ type ConfigFile struct {
 	Applications []AppConfig `json:"applications"`
 }
 
-func loadConfigFile(configFile string) (*ConfigFile, error) {
+func LoadConfigFile(configFile string) (*ConfigFile, error) {
 	file, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, err

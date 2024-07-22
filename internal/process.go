@@ -1,7 +1,6 @@
-package main
+package internal
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -28,7 +27,8 @@ func (p *ProcessHander) StartProcesses(apps []AppConfig) (map[int]ProcessDetails
 
 	runningProcs, err := ps.Processes()
 	if err != nil {
-		panic(fmt.Sprintf("Error listing processed (%s)", err))
+		p.logger.Error("Error listing processed", "error", err)
+		return nil, err
 	}
 
 	for _, app := range apps {
@@ -38,11 +38,11 @@ func (p *ProcessHander) StartProcesses(apps []AppConfig) (map[int]ProcessDetails
 			// check existing processes
 			currentPid, err := p.findPidFromPath(app.Path, runningProcs)
 			if err != nil {
-				p.logger.Warn(fmt.Sprintf("Error checking running processes : %s", err))
+				p.logger.Warn("Error checking running processes", "error", err)
 			}
 			if currentPid != -1 {
 				newProc.pid = currentPid
-				p.logger.Info(fmt.Sprintf("Found running app %s [PID : %d]\n", newProc.path, newProc.pid))
+				p.logger.Info("Found running app", "path", newProc.path, "pid", newProc.pid)
 			}
 		}
 
@@ -54,7 +54,7 @@ func (p *ProcessHander) StartProcesses(apps []AppConfig) (map[int]ProcessDetails
 				return nil, err
 			}
 			newProc.pid = cmd.Process.Pid
-			p.logger.Info(fmt.Sprintf("Starting apps %s [PID : %d]", newProc.path, newProc.pid))
+			p.logger.Info("Starting app", "path", newProc.path, "pid", newProc.pid)
 		}
 		procs[newProc.pid] = newProc
 	}
@@ -65,7 +65,7 @@ func (p *ProcessHander) StartProcesses(apps []AppConfig) (map[int]ProcessDetails
 func (p *ProcessHander) findPidFromPath(path string, procs []ps.Process) (int, error) {
 	for _, proc := range procs {
 		if procPath, _ := proc.Path(); procPath == path {
-			p.logger.Debug(fmt.Sprintf("Found running app %s with PID %d", path, proc.Pid()))
+			p.logger.Debug("Found running app", "path", path, "pid", proc.Pid())
 			return proc.Pid(), nil
 		}
 	}
@@ -86,7 +86,7 @@ func (p *ProcessHander) CheckRunningProcesses(procs map[int]ProcessDetails) {
 		go p.checkRunningProcess(pid, chanProcesses)
 	}
 	closedProcess := <-chanProcesses
-	p.logger.Info(fmt.Sprintf("Process closed %s [PID: %d]", procs[closedProcess].path, closedProcess))
+	p.logger.Info("Process closed", "path", procs[closedProcess].path, "pid", closedProcess)
 }
 
 func (p *ProcessHander) checkRunningProcess(pid int, processes chan int) {
@@ -96,22 +96,22 @@ func (p *ProcessHander) checkRunningProcess(pid int, processes chan int) {
 	}
 
 	// Wait the process to exit
-	p.logger.Debug(fmt.Sprintf("Waiting process [PID: %d] to exit", pid))
+	p.logger.Debug("Waiting process to exit", "pid", pid)
 	processState, err := process.Wait()
 	if err != nil {
-		p.logger.Warn(fmt.Sprintf("Error while waiting process [PID: %d]", pid))
+		p.logger.Warn("Error while waiting process", "pid", pid)
 		processes <- pid
 		return
 	}
 
 	if processState.Exited() {
-		p.logger.Info(fmt.Sprintf("Process [PID: %d] exited with code %d", pid, processState.ExitCode()))
+		p.logger.Info("Process exited", "pid", pid, "exitcode", processState.ExitCode())
 		processes <- pid
 		return
 	}
 
 	// something went wrong (?), let's assume process is over
-	p.logger.Warn(fmt.Sprintf("Process [PID: %d] exited but : %s ", pid, processState))
+	p.logger.Warn("Process exited with issue", "pid", pid, "state", processState)
 	processes <- pid
 }
 
@@ -119,16 +119,16 @@ func (p *ProcessHander) KillProcesses(procs map[int]ProcessDetails) {
 	p.logger.Info("Killing other apps")
 	for _, proc := range procs {
 		if proc.killOnExit {
-			p.logger.Debug(fmt.Sprintf("Killing process %s [PID: %d]", proc.path, proc.pid))
+			p.logger.Debug("Killing process", "path", proc.path, "pid", proc.pid)
 			procKilled, err := p.killProcess(proc.pid)
 			if err != nil {
-				p.logger.Warn(fmt.Sprintf("Error when killing process %s [PID: %d] : %s", proc.path, proc.pid, err))
+				p.logger.Warn("Error when killing process", "path", proc.path, "pid", proc.pid, "error", err)
 			}
 			if procKilled {
-				p.logger.Info(fmt.Sprintf("Killed process %s [PID: %d]", proc.path, proc.pid))
+				p.logger.Info("Killed process", "path", proc.path, "pid", proc.pid)
 			}
 		} else {
-			p.logger.Debug(fmt.Sprintf("Skipping process %s [PID: %d]", proc.path, proc.pid))
+			p.logger.Debug("Skipping process", "path", proc.path, "pid", proc.pid)
 		}
 	}
 }
@@ -141,7 +141,7 @@ func (p *ProcessHander) killProcess(pid int) (bool, error) {
 	process, _ := os.FindProcess(pid)
 	err := process.Kill()
 	if err != nil {
-		p.logger.Warn(fmt.Sprintf("Cannot kill process %d", pid))
+		p.logger.Warn("Cannot kill process", "pid", pid)
 		return false, err
 	}
 	return true, nil

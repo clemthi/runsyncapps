@@ -1,11 +1,11 @@
-package main
+package internal
 
 import (
 	"github.com/getlantern/systray"
 	"github.com/getlantern/systray/example/icon"
 )
 
-func onReadyUI() {
+func OnReadyUI() {
 	systray.SetTemplateIcon(icon.Data, icon.Data)
 	systray.SetTitle("RunSyncApp")
 	systray.SetTooltip("RunSyncApp")
