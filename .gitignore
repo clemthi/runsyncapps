@@ -37,4 +37,6 @@ go.work
 # Built Visual Studio Code Extensions
 *.vsix
 
+# project specific
 
+*.log

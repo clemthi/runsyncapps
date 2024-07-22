@@ -1,0 +1,34 @@
+name: Pull Request
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+
+  validate:
+    runs-on: 
+      - self-hosted
+      - ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - name: Vet
+        run: go vet ./...
+      - name: Build
+        run: go build -v ./cmd
+
+  vulnerability-check:
+    runs-on:
+      - self-hosted
+      - ubuntu-latest
+    steps:
+      - name: govulncheck
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-file: './go.mod'
+          go-package: ./...
+          check-latest: true
