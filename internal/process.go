@@ -105,7 +105,7 @@ func (p *ProcessHander) checkRunningProcess(pid int, processes chan int) {
 	}
 
 	if processState.Exited() {
-		p.logger.Info("Process exited", "pid", pid, "exitcode", processState.ExitCode())
+		p.logger.Debug("Process exited", "pid", pid, "exitcode", processState.ExitCode())
 		processes <- pid
 		return
 	}

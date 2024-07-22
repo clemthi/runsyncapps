@@ -31,7 +31,7 @@ func main() {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 		f, _ := os.Create(addTimeSuffix(traceFile))
 		defer f.Close()
-		logHandler = slog.NewTextHandler(f, nil)
+		logHandler = i.NewCustomLogHandler(f, nil)
 	} else {
 		logHandler = slog.NewTextHandler(io.Discard, nil)
 	}
