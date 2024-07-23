@@ -1,5 +1,5 @@
 name: Pull Request
-
+run-name: Pull Request on ${{ github.ref_name }} by @${{ github.actor }}
 
 on: 
   - pull_request
@@ -10,7 +10,7 @@ jobs:
 
   validate:
     runs-on: 
-      - macos-latest
+      - windows-latest
     timeout-minutes: 15
     steps:
       - name: Checkout Code
@@ -22,7 +22,7 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: Build
-        run: go build -v -o runsyncapps ./cmd
+        run: go build -v -o runsyncapps -ldflags="-H windowsgui" ./cmd
 
   vulnerability-check:
     runs-on:

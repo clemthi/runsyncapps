@@ -5,8 +5,10 @@ This small application allows to start multiple applications at once and if one 
 ## Bulding
 
 ```shell
-go build -o="runsyncapps.exe" -ldflags="-H windowsgui" ./cmd/
+go build -o="runsyncapps.exe" ./cmd/
 ```
+
+You can add the buyild flag `-ldflags="-H windowsgui"` to avoid the console to open when starting the app.
 
 ## Usage
 
