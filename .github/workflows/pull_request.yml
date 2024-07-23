@@ -22,7 +22,7 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: Build
-        run: go build -v -o runsyncapps ./cmd
+        run: go build -v -o runsyncapps -ldflags="-H windowsgui" ./cmd
 
   vulnerability-check:
     runs-on:
