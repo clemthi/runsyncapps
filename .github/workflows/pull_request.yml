@@ -1,8 +1,8 @@
 name: Pull Request
-
+run-name: Pull Request on ${{ github.ref_name }} by @${{ github.actor }}
 
 on: 
-  - pull_request
+  # - pull_request
   - workflow_dispatch
 
 
