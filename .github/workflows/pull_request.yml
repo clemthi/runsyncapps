@@ -10,7 +10,7 @@ jobs:
 
   validate:
     runs-on: 
-      - ubuntu-latest
+      - macos-latest
     timeout-minutes: 15
     steps:
       - name: Checkout Code
@@ -26,8 +26,7 @@ jobs:
 
   vulnerability-check:
     runs-on:
-      - self-hosted
-      - ubuntu-latest
+      - macos-latest
     steps:
       - name: govulncheck
         uses: golang/govulncheck-action@v1
