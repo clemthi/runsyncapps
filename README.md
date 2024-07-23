@@ -2,6 +2,12 @@
 
 This small application allows to start multiple applications at once and if one of them is closed, the others are killed. A system tray icon allows the using to exit the application without killing the child processes.
 
+## Bulding
+
+```shell
+go build -o="runsyncapps.exe" -ldflags="-H windowsgui" ./cmd/
+```
+
 ## Usage
 
 ```shell

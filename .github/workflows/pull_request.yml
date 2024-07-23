@@ -1,13 +1,16 @@
 name: Pull Request
 
-on: [pull_request, workflow_dispatch]
+
+on: 
+  - pull_request
+  - workflow_dispatch
+
 
 jobs:
 
   validate:
     runs-on: 
-      - self-hosted
-      - ubuntu-latest
+      - macos-latest
     timeout-minutes: 15
     steps:
       - name: Checkout Code
@@ -19,12 +22,11 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: Build
-        run: go build -v ./cmd
+        run: go build -v -o runsyncapps ./cmd
 
   vulnerability-check:
     runs-on:
-      - self-hosted
-      - ubuntu-latest
+      - macos-latest
     steps:
       - name: govulncheck
         uses: golang/govulncheck-action@v1
