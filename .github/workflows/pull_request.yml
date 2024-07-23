@@ -22,7 +22,7 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: Build
-        run: go build -v ./cmd
+        run: go build -v -o runsyncapps ./cmd
 
   vulnerability-check:
     runs-on:
