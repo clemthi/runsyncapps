@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
 	"time"
@@ -17,15 +15,16 @@ import (
 )
 
 const (
-	traceFile string = "trace.log"
+	traceFile         string = "trace.log"
+	defaultConfigFile string = "config.json"
 )
 
 func main() {
-	configFile := flag.String("config", "config.json", "path to a configuration file")
+	configFile := flag.String("config", defaultConfigFile, "path to a configuration file")
 	enableLog := flag.Bool("log", false, "enable logging")
 	flag.Parse()
 
-	// Init default log handler
+	// Init log handler
 	var logHandler slog.Handler
 	if *enableLog {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
@@ -36,27 +35,16 @@ func main() {
 		logHandler = slog.NewTextHandler(io.Discard, nil)
 	}
 
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-
-	// Handle interrupt
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
-	defer func() {
-		signal.Stop(signalChan)
-		cancel()
-	}()
-
 	// Init systray icon
 	go systray.Run(i.OnReadyUI, func() { os.Exit(0) })
 
-	if err := run(ctx, *configFile, logHandler); err != nil {
+	if err := run(*configFile, logHandler); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, configFile string, logHandler slog.Handler) error {
+func run(configFile string, logHandler slog.Handler) error {
 	logger := slog.New(logHandler)
 
 	config, err := i.LoadConfigFile(configFile)
