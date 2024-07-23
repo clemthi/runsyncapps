@@ -2,7 +2,7 @@ name: Pull Request
 
 
 on: 
-  # - pull_request
+  - pull_request
   - workflow_dispatch
 
 
@@ -10,7 +10,6 @@ jobs:
 
   validate:
     runs-on: 
-      - self-hosted
       - ubuntu-latest
     timeout-minutes: 15
     steps:
