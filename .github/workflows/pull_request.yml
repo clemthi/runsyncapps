@@ -9,7 +9,8 @@ on:
 jobs:
 
   validate:
-    runs-on: 
+    runs-on:
+      # easier to use Windows runner with the windowsgui build flag
       - windows-latest
     timeout-minutes: 15
     steps:
@@ -26,7 +27,7 @@ jobs:
 
   vulnerability-check:
     runs-on:
-      - macos-latest
+      - ubuntu-latest
     steps:
       - name: govulncheck
         uses: golang/govulncheck-action@v1
