@@ -6,8 +6,8 @@ import (
 
 func OnReadyUI() {
 	systray.SetTemplateIcon(SysTrayIcon, SysTrayIcon)
-	systray.SetTitle("RunSyncApp")
-	systray.SetTooltip("RunSyncApp")
+	systray.SetTitle("RunSyncApps")
+	systray.SetTooltip("RunSyncApps")
 
 	// Exit menu
 	mQuitOrig := systray.AddMenuItem("Quit", "Quit")

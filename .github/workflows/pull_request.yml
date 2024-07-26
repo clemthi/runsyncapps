@@ -1,6 +1,7 @@
 name: Pull Request
 run-name: Pull Request on ${{ github.ref_name }} by @${{ github.actor }}
 
+
 on: 
   - pull_request
   - workflow_dispatch
@@ -8,13 +9,15 @@ on:
 
 jobs:
 
-  validate:
-    runs-on: 
-      - windows-latest
+  validate-and-build:
+    runs-on:
+      - ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+      - name: Install libs
+        run: sudo apt install -y gcc libgtk-3-dev libayatana-appindicator3-dev
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -22,12 +25,15 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: Build
-        run: go build -v -o runsyncapps -ldflags="-H windowsgui" ./cmd
+        run: go build -v -o runsyncapps ./cmd
 
   vulnerability-check:
     runs-on:
-      - macos-latest
+      - ubuntu-latest
+    timeout-minutes: 15
     steps:
+      - name: Install libs
+        run: sudo apt install -y gcc libgtk-3-dev libayatana-appindicator3-dev
       - name: govulncheck
         uses: golang/govulncheck-action@v1
         with:
